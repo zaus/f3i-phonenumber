@@ -36,7 +36,7 @@ class F3iPhonenumber {
 		$this->initUtil();
 		
 		
-		add_filter(self::B.'_service_filter_post', array(&$this, 'post_filter'), 10, 5);
+		add_filter(self::B.'_get_submission', array(&$this, 'get_submission'), 15, 3);
 	}
 	
 	private static $util;
@@ -46,35 +46,44 @@ class F3iPhonenumber {
 		self::$util = \libphonenumber\PhoneNumberUtil::getInstance();
 	}
 	
-	public function post_filter($post, $service, $form, $sid, $submission) {
-		if(!isset($service[static::PARAM_FIELDS]) || empty($service[static::PARAM_FIELDS])) return $post;
+	public function get_submission($submission, $form, $service) {
+		if(!isset($service[static::PARAM_FIELDS]) || empty($service[static::PARAM_FIELDS])) return $submission;
 		
 		$phoneFields = $service[static::PARAM_FIELDS];
-		$phoneFields = array_map('trim', explode(',', $phoneFields));
+		parse_str($phoneFields, $phoneFields);
 		
-		_log(__CLASS__, $phoneFields, $post, $submission);
+		//$phoneFields = array_map('trim', explode(',', $phoneFields));
 		
-		// should we only look in the post, or also the submission?
-		$target = $submission; // $post
+		### _log(__CLASS__, $phoneFields, $submission);
 		
-		foreach($phoneFields as $field) {
+		foreach($phoneFields as $field=>$format) {
 			
-			if(!isset($target[$field]) || empty($target[$field])) continue;
+			if(!isset($submission[$field]) || empty($submission[$field])) continue;
 			
-			$phonenumber = $target[$field];
+			$phonenumber = $submission[$field];
 			
 			try {
-				$proto = self::$util->parse($phonenumber, "CH");
+				$proto = self::$util->parse($phonenumber, !isset($format) || empty($format) ? "US" : $format);
+				
+				### _log('parsed proto', $field, $format, $proto);
+				
+				// attach parts to submission
+				$args = (array) $proto; // get_object_vars($proto)
+				_log($proto, $args);
+				
+				foreach($args as $k=>$v) $submission[$field . '-' . $k] = $v;
 			}
 			catch(\libphonenumber\NumberParseException $e) {
 				$proto = $e->getMessage();
-				$post['f3iph-error-' . $field] = $e->getMessage();
+				
+				$submission['f3iph-error-' . $field] = sprintf("(%s/%s) %s", $field, $format, $e->getMessage());
 			}
 			
-			_log(__CLASS__, $phonenumber, $proto);
+			### _log(__CLASS__, $phonenumber, $proto);
 		}
 		
-		return $post;
+		### _log(__CLASS__, $submission);
+		return $submission;
 	}
 	
 	
@@ -89,7 +98,7 @@ class F3iPhonenumber {
 					<div class="field">
 						<label for="<?php echo $field, '-', $eid ?>"><?php _e('Phone number configuration', $P); ?></label>
 						<input id="<?php echo $field, '-', $eid ?>" type="text" class="text" name="<?php echo $P, '[', $eid, '][', $field, ']'?>" value="<?php echo isset($entity[$field]) ? esc_attr($entity[$field]) : 'field_name=(%s) %s'?>" />
-						<em class="description"><?php _e('List of field names to treat as phone numbers for parsing, comma-separated.', $P); ?></em>
+						<em class="description"><?php echo sprintf( __('List of field names to treat as phone numbers for parsing, given as URL-encoded querystring %s.', $P), '<code>field_name&field_name2=country-format</code>' ); ?></em>
 					</div>
 				</div>
 			</fieldset>
