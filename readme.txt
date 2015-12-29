@@ -7,11 +7,13 @@ Tested up to: 4.3
 Stable tag: trunk
 License: GPLv2 or later
 
-Save referral variables to temporary storage (cookies)
+Forms: 3rdparty Integration add-on to parse phone numbers.
 
 == Description ==
 
 An add-on to ['Forms: 3rdparty Integration'](https://wordpress.org/plugins/forms-3rdparty-integration/), it parses phone number fields from Contact Form submissions and exposes them to additional mapping.
+
+Uses the [PHP Port of Google's libphonenumber](https://github.com/giggsey/libphonenumber-for-php). 
 
 == Installation ==
 
@@ -54,3 +56,5 @@ N/A.
 * started
 
 == Upgrade Notice ==
+
+N/A.
