@@ -5,11 +5,12 @@ Plugin Name: Forms: 3rdparty-Integration Phone Numbers
 Plugin URI: https://github.com/zaus/f3i-phonenumber
 Description: Parses forms-3rdparty submission phone number fields
 Author: zaus
-Version: 0.2
+Version: 0.3
 Author URI: http://drzaus.com
 Changelog:
 	0.1	initial, composer dependency
 	0.2 input/output formats
+	0.3 use other submission fields as formats
 */
 
 class F3iPhonenumber {
@@ -18,6 +19,7 @@ class F3iPhonenumber {
 	const B = 'Forms3rdPartyIntegration';
 	
 	const PARAM_FIELDS = 'f3iph';
+	const FIELD_KEY_PREFIX = '##';
 	
 	public function __construct() {
 // 		require('F3iPhonenumber-options.php');
@@ -57,9 +59,18 @@ class F3iPhonenumber {
 		'NumberOfLeadingZeros'
 	);
 	
+	private function format_check($format, $submission) {
+		if(strpos($format, self::FIELD_KEY_PREFIX) !== false) {
+			return $submission[substr($format, count(self::FIELD_KEY_PREFIX)+1)];
+		}
+		
+		return $format;
+	}
+	
 	public function get_submission($submission, $form, $service) {
 		if(!isset($service[static::PARAM_FIELDS]) || empty($service[static::PARAM_FIELDS])) return $submission;
 		
+		// php >5.3.14 ??
 		$phoneFields = $service[static::PARAM_FIELDS];
 		parse_str($phoneFields, $phoneFields);
 		
@@ -76,10 +87,18 @@ class F3iPhonenumber {
 				$format = 'US';
 			}
 			else {
-				list($format, $outformat) = explode(',', $format);
+				// can't use list($format, $outformat) if only one thing listed...
+				$format = explode(',', $format);
+				// only set the output format if explicitly provided
+				if(count($format) > 1) $outformat = end($format);
+				$format = $format[0];
 			}
 			
 			if(!isset($outformat)) $outformat = \libphonenumber\PhoneNumberFormat::INTERNATIONAL;
+			
+			// special formatting -- maybe use another submission field
+			$format = $this->format_check($format, $submission);
+			$outformat = $this->format_check($outformat, $submission);
 			
 			try {
 				$proto = self::$util->parse($phonenumber, !isset($format) || empty($format) ? "US" : $format);
@@ -133,10 +152,12 @@ class F3iPhonenumber {
 					<div class="field">
 						<label for="<?php echo $field, '-', $eid ?>"><?php _e('Phone number Fields:', $P); ?></label>
 						<input id="<?php echo $field, '-', $eid ?>" type="text" class="text" name="<?php echo $P, '[', $eid, '][', $field, ']'?>" value="<?php echo isset($entity[$field]) ? esc_attr($entity[$field]) : 'field_name=(%s) %s'?>" />
-						<em class="description"><?php echo sprintf( __('List of field names to treat as phone numbers for parsing, given as URL-encoded querystring %s.  Please see <a href="%s">this library</a> for more information on country codes and formatting options, such as %s.', $P)
-							, '<code>field_name&field_name2=country-format&field_name3=input-format,output-format</code>'
+						<em class="description"><?php echo sprintf( __('List of field names to treat as phone numbers for parsing, given as URL-encoded querystring %s.  Please see <a href="%s">this library</a> for more information on country codes and formatting options, such as %s, or reference another field name via prefix %s.', $P)
+							, '<code>field_name&field2=country-format&field3=input-format,output-format&field4=##field5</code>'
 							, 'https://github.com/giggsey/libphonenumber-for-php'
-							, '<code>\'US\'</code>, <code>\'GB\'</code>, <code>1</code>' ); ?></em>
+							, '<code>\'US\'</code>, <code>\'GB\'</code>, <code>1</code>'
+							, '<code>' . self::FIELD_KEY_PREFIX . '</code>'
+							 ); ?></em>
 					</div>
 				</div>
 			</fieldset>

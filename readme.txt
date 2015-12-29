@@ -25,6 +25,7 @@ Uses the [PHP Port of Google's libphonenumber](https://github.com/giggsey/libpho
 You can provide one or more phone numbers separated by `&` symbols.
 You may specify the input format (per country) with `=country-code`.
 You may specify both the input format and output format with `=input-format,output-format`.
+You may use another submission field to define the format by prefixing that field name with `##`, e.g. `field_name=##another_field`
 
 == Frequently Asked Questions ==
 
@@ -48,6 +49,9 @@ From [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/li
 N/A.
 
 == Changelog ==
+
+= 0.3 =
+* use another submission field as the format
 
 = 0.2 =
 * support for input/output format
