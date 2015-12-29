@@ -46,6 +46,16 @@ class F3iPhonenumber {
 		self::$util = \libphonenumber\PhoneNumberUtil::getInstance();
 	}
 	
+	/**
+	 * The parts that will be attached to the submission as `FIELD-PART`
+	 */
+	private static $parts = array(
+		'CountryCode',
+		'NationalNumber',
+		'Extension',
+		'NumberOfLeadingZeros'
+	);
+	
 	public function get_submission($submission, $form, $service) {
 		if(!isset($service[static::PARAM_FIELDS]) || empty($service[static::PARAM_FIELDS])) return $submission;
 		
@@ -67,11 +77,14 @@ class F3iPhonenumber {
 				
 				### _log('parsed proto', $field, $format, $proto);
 				
-				// attach parts to submission
-				$args = (array) $proto; // get_object_vars($proto)
-				_log($proto, $args);
+				// attach parts to submission -- look at PhoneNumber.php
+				// self::$util->format($proto, \libphonenumber\PhoneNumberFormat::INTERNATIONAL)
+				// $parts = unserialize($proto->serialize());
 				
-				foreach($args as $k=>$v) $submission[$field . '-' . $k] = $v;
+				// attach each expected part, even if empty
+				foreach(self::$parts as $k) {
+					$submission[$field . '-' . $k] = $proto->{'get' . $k}();
+				}
 			}
 			catch(\libphonenumber\NumberParseException $e) {
 				$proto = $e->getMessage();
