@@ -5,10 +5,11 @@ Plugin Name: Forms: 3rdparty-Integration Phone Numbers
 Plugin URI: https://github.com/zaus/f3i-phonenumber
 Description: Parses forms-3rdparty submission phone number fields
 Author: zaus
-Version: 0.4
+Version: 0.2
 Author URI: http://drzaus.com
 Changelog:
 	0.1	initial, composer dependency
+	0.2 input/output formats
 */
 
 class F3iPhonenumber {
@@ -71,6 +72,14 @@ class F3iPhonenumber {
 			if(!isset($submission[$field]) || empty($submission[$field])) continue;
 			
 			$phonenumber = $submission[$field];
+			if(!isset($format) || empty($format)) {
+				$format = 'US';
+			}
+			else {
+				list($format, $outformat) = explode(',', $format);
+			}
+			
+			if(!isset($outformat)) $outformat = \libphonenumber\PhoneNumberFormat::INTERNATIONAL;
 			
 			try {
 				$proto = self::$util->parse($phonenumber, !isset($format) || empty($format) ? "US" : $format);
@@ -82,9 +91,15 @@ class F3iPhonenumber {
 				// $parts = unserialize($proto->serialize());
 				
 				// attach each expected part, even if empty
+				$parts = array();
 				foreach(self::$parts as $k) {
-					$submission[$field . '-' . $k] = $proto->{'get' . $k}();
+					$parts[$field . '-' . $k] = $proto->{'get' . $k}();
 				}
+				$parts[$field . '-Out'] = self::$util->format($proto, $outformat);
+				
+				### _log($phonenumber, $format, $outformat, $parts);
+				
+				$submission += $parts;
 			}
 			catch(\libphonenumber\NumberParseException $e) {
 				$proto = $e->getMessage();
@@ -106,12 +121,22 @@ class F3iPhonenumber {
 			<fieldset class="postbox"><legend class="hndle"><span><?php _e('Phone Number', $P); ?></span></legend>
 				<div class="inside">
 					<em class="description"><?php _e('Configure phone-number parsing.', $P) ?></em>
+					<p class="description"><?php _e('The indicated fields will parsed and be attached to the submission array with the following keys:', $P) ?></p>
+					<ul>
+					<?php foreach(self::$parts as $part) { ?>
+						<li><code>FIELD-</code><code><?php echo $part ?></code></li>
+					<?php } ?>
+						<li><code>FIELD-</code><code>Out</code> &mdash; <em>this will be reformatted according to an output format given (or default)</li>
+					</ul>
 
 					<?php $field = static::PARAM_FIELDS; ?>
 					<div class="field">
-						<label for="<?php echo $field, '-', $eid ?>"><?php _e('Phone number configuration', $P); ?></label>
+						<label for="<?php echo $field, '-', $eid ?>"><?php _e('Phone number Fields:', $P); ?></label>
 						<input id="<?php echo $field, '-', $eid ?>" type="text" class="text" name="<?php echo $P, '[', $eid, '][', $field, ']'?>" value="<?php echo isset($entity[$field]) ? esc_attr($entity[$field]) : 'field_name=(%s) %s'?>" />
-						<em class="description"><?php echo sprintf( __('List of field names to treat as phone numbers for parsing, given as URL-encoded querystring %s.', $P), '<code>field_name&field_name2=country-format</code>' ); ?></em>
+						<em class="description"><?php echo sprintf( __('List of field names to treat as phone numbers for parsing, given as URL-encoded querystring %s.  Please see <a href="%s">this library</a> for more information on country codes and formatting options, such as %s.', $P)
+							, '<code>field_name&field_name2=country-format&field_name3=input-format,output-format</code>'
+							, 'https://github.com/giggsey/libphonenumber-for-php'
+							, '<code>\'US\'</code>, <code>\'GB\'</code>, <code>1</code>' ); ?></em>
 					</div>
 				</div>
 			</fieldset>
