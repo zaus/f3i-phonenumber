@@ -1,5 +1,7 @@
 {
+	"name": "zaus/f3i-phonenumber",
+	"type": "wordpress-plugin",
     "require": {
-        "giggsey/libphonenumber-for-php": "^7.2"
+		"giggsey/libphonenumber-for-php": "^7.2"
     }
 }

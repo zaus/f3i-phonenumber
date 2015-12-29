@@ -43,7 +43,7 @@ class F3iPhonenumber {
 	private static $util;
 	
 	function initUtil() {
-		include('vendor/autoload.php');
+		require(__DIR__.'/vendor/autoload.php');
 		self::$util = \libphonenumber\PhoneNumberUtil::getInstance();
 	}
 	
@@ -124,9 +124,9 @@ class F3iPhonenumber {
 					<p class="description"><?php _e('The indicated fields will parsed and be attached to the submission array with the following keys:', $P) ?></p>
 					<ul>
 					<?php foreach(self::$parts as $part) { ?>
-						<li><code>FIELD-</code><code><?php echo $part ?></code></li>
+						<li><code>FIELD_NAME-</code><code><?php echo $part ?></code></li>
 					<?php } ?>
-						<li><code>FIELD-</code><code>Out</code> &mdash; <em>this will be reformatted according to an output format given (or default)</li>
+						<li><code>FIELD_NAME-</code><code>Out</code> &mdash; <em>this will be reformatted according to an output format given (or default)</li>
 					</ul>
 
 					<?php $field = static::PARAM_FIELDS; ?>
