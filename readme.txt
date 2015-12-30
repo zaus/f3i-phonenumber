@@ -13,7 +13,7 @@ Forms: 3rdparty Integration add-on to parse phone numbers.
 
 An add-on to ['Forms: 3rdparty Integration'](https://wordpress.org/plugins/forms-3rdparty-integration/), it parses phone number fields from Contact Form submissions and exposes them to additional mapping.
 
-Uses the [PHP Port of Google's libphonenumber](https://github.com/giggsey/libphonenumber-for-php). 
+Uses the [PHP Port of Google's libphonenumber](https://github.com/giggsey/libphonenumber-for-php), which may be included via Composer instead -- see [GitHub version](https://github.com/zaus/f3i-phonenumber) instead.
 
 == Installation ==
 
