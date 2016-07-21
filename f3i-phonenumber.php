@@ -5,12 +5,13 @@ Plugin Name: Forms: 3rdparty-Integration Phone Numbers
 Plugin URI: https://github.com/zaus/f3i-phonenumber
 Description: Parses forms-3rdparty submission phone number fields
 Author: zaus
-Version: 0.3
+Version: 0.4
 Author URI: http://drzaus.com
 Changelog:
 	0.1	initial, composer dependency
-	0.2 input/output formats
-	0.3 use other submission fields as formats
+	0.2	input/output formats
+	0.3	use other submission fields as formats
+	0.4	libphonenumber v7.4.5, get area code
 */
 
 class F3iPhonenumber {
@@ -119,7 +120,7 @@ class F3iPhonenumber {
 
 				// area code per https://github.com/googlei18n/libphonenumber/issues/46 and https://github.com/giggsey/libphonenumber-for-php/blob/4ca0df036abdab8fa7bdf7c81eec07d5da30068e/src/libphonenumber/PhoneNumberUtil.php#L567
 				$acLen = self::$util->getLengthOfGeographicalAreaCode($proto);
-				$nationalNumber = $proto->getNationalSignificantNumber();
+				$nationalNumber = self::$util->getNationalSignificantNumber($proto);
 
 				// attach each expected part, even if empty
 				// foreach(self::$parts as $k) $parts[$field . '-' . $k] = $proto->{'get' . $k}();
