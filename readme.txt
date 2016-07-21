@@ -30,6 +30,8 @@ You may use another submission field to define the format by prefixing that fiel
 Will parse and split up input phone number(s) and create additional 'submission' fields (which you can map against):
 * `FIELDNAME-CountryCode` = country code
 * `FIELDNAME-NationalNumber` = regional number (without country code)
+* `FIELDNAME-AreaCode` = regional code
+* `FIELDNAME-Subscriber` = local number (without area code)
 * `FIELDNAME-Extension` = telephone extension, if present
 * `FIELDNAME-NumberOfLeadingZeros` = how many zeros it would start with if it had them
 * `FIELDNAME-Out` = reformated phone number
@@ -65,6 +67,10 @@ From [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/li
 N/A.
 
 == Changelog ==
+
+= 0.4 =
+* updated libphonenumber from v7.2.2 to v7.4.5
+* including area code + subscriber number components
 
 = 0.3 =
 * use another submission field as the format
