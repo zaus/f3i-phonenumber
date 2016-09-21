@@ -3,7 +3,7 @@ Contributors: zaus
 Donate link: http://drzaus.com/donate
 Tags: contact form, 3rdparty services, API, phone number, parsing, international number
 Requires at least: 3.0
-Tested up to: 4.3
+Tested up to: 4.5.3
 Stable tag: trunk
 License: GPLv2 or later
 
