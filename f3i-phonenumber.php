@@ -5,13 +5,14 @@ Plugin Name: Forms: 3rdparty-Integration Phone Numbers
 Plugin URI: https://github.com/zaus/f3i-phonenumber
 Description: Parses forms-3rdparty submission phone number fields
 Author: zaus
-Version: 0.4
+Version: 0.4.2
 Author URI: http://drzaus.com
 Changelog:
 	0.1	initial, composer dependency
 	0.2	input/output formats
 	0.3	use other submission fields as formats
 	0.4	libphonenumber v7.4.5, get area code
+	0.4.2	parse_str spaces quirk
 */
 
 class F3iPhonenumber {
@@ -79,9 +80,17 @@ class F3iPhonenumber {
 		// php >5.3.14 ??
 		$phoneFields = $service[static::PARAM_FIELDS];
 		parse_str($phoneFields, $phoneFields);
+
+		// quirk -- spaces in keys get turned into underscores: http://php.net/manual/en/function.parse-str.php#76978
+		foreach($phoneFields as $field=>$format) {
+			if( strpos($service[static::PARAM_FIELDS], $field) === false && strpos($field, '_') !== false ) {
+				unset($phoneFields[$field]);
+				$field = str_replace('_', ' ', $field);
+				$phoneFields[$field] = $format;
+			}
+		}
 		
 		//$phoneFields = array_map('trim', explode(',', $phoneFields));
-		
 		### _log(__CLASS__, $phoneFields, $submission);
 		
 		foreach($phoneFields as $field=>$format) {
@@ -147,7 +156,7 @@ class F3iPhonenumber {
 			### _log(__CLASS__, $phonenumber, $proto);
 		}
 		
-		### _log(__CLASS__, $submission);
+		### _log(__CLASS__ . '--after', $phoneFields, $submission);
 		return $submission;
 	}
 	

@@ -51,6 +51,13 @@ Example: to convert input phone-number "9195551234" in various fields:
 
 Drop an issue at https://github.com/zaus/f3i-phonenumber
 
+= Using field labels =
+
+Forms 3rdparty Integration makes some form plugin fields available by label as well as by id.  There is a [quirk in parsing url-querystrings](http://php.net/manual/en/function.parse-str.php#76978) whereby spaces in keys are turned into underscores.
+As of v0.4.2 this plugin will check if the key should have had spaces, so that 'your label=fieldvalue' will turn into:
+ * `your label-NationalNumber`
+ * `your label-_etc_`
+
 = Formats =
 
 From [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/libphonenumber/PhoneNumberFormat.php), among other places
@@ -67,6 +74,9 @@ From [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/li
 N/A.
 
 == Changelog ==
+
+= 0.4.2 =
+* addressing [spaces in url key quirk](http://php.net/manual/en/function.parse-str.php#76978)
 
 = 0.4 =
 * updated libphonenumber from v7.2.2 to v7.4.5
