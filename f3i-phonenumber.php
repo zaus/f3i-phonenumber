@@ -145,7 +145,7 @@ class F3iPhonenumber {
 					<?php foreach(self::$parts as $part) { ?>
 						<li><code>FIELD_NAME-</code><code><?php echo $part ?></code></li>
 					<?php } ?>
-						<li><code>FIELD_NAME-</code><code>Out</code> &mdash; <em>this will be reformatted according to an output format given (or default)</li>
+						<li><code>FIELD_NAME-</code><code>Out</code> &mdash; <em>this will be reformatted according to an output format given (or default)</em></li>
 					</ul>
 
 					<?php $field = static::PARAM_FIELDS; ?>
