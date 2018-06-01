@@ -5,12 +5,14 @@ Plugin Name: Forms: 3rdparty-Integration Phone Numbers
 Plugin URI: https://github.com/zaus/f3i-phonenumber
 Description: Parses forms-3rdparty submission phone number fields
 Author: zaus
-Version: 0.3
+Version: 0.4.2
 Author URI: http://drzaus.com
 Changelog:
 	0.1	initial, composer dependency
-	0.2 input/output formats
-	0.3 use other submission fields as formats
+	0.2	input/output formats
+	0.3	use other submission fields as formats
+	0.4	libphonenumber v7.4.5, get area code
+	0.4.2	parse_str spaces quirk
 */
 
 class F3iPhonenumber {
@@ -50,13 +52,18 @@ class F3iPhonenumber {
 	}
 	
 	/**
-	 * The parts that will be attached to the submission as `FIELD-PART`
+	 * The parts that will be attached to the submission as `FIELD-PART`; used to show list on admin page
 	 */
 	private static $parts = array(
 		'CountryCode',
-		'NationalNumber',
+		'NationalNumber', //<-- we want instead to use the `NationalSignificantNumber`
+		// the following 2 are "manually" determined
+		'AreaCode',
+		'Subscriber',
 		'Extension',
 		'NumberOfLeadingZeros'
+		// == manually added ==
+		// , 'Out'
 	);
 	
 	private function format_check($format, $submission) {
@@ -73,9 +80,17 @@ class F3iPhonenumber {
 		// php >5.3.14 ??
 		$phoneFields = $service[static::PARAM_FIELDS];
 		parse_str($phoneFields, $phoneFields);
+
+		// quirk -- spaces in keys get turned into underscores: http://php.net/manual/en/function.parse-str.php#76978
+		foreach($phoneFields as $field=>$format) {
+			if( strpos($service[static::PARAM_FIELDS], $field) === false && strpos($field, '_') !== false ) {
+				unset($phoneFields[$field]);
+				$field = str_replace('_', ' ', $field);
+				$phoneFields[$field] = $format;
+			}
+		}
 		
 		//$phoneFields = array_map('trim', explode(',', $phoneFields));
-		
 		### _log(__CLASS__, $phoneFields, $submission);
 		
 		foreach($phoneFields as $field=>$format) {
@@ -99,23 +114,35 @@ class F3iPhonenumber {
 			// special formatting -- maybe use another submission field
 			$format = $this->format_check($format, $submission);
 			$outformat = $this->format_check($outformat, $submission);
-			
+
+			## _log('before parse', $field, $phonenumber, $format, $outformat);
+
+			// also see http://giggsey.com/libphonenumber/?phonenumber=9197654321&country=US&language=en&region=US
 			try {
 				$proto = self::$util->parse($phonenumber, !isset($format) || empty($format) ? "US" : $format);
 				
-				### _log('parsed proto', $field, $format, $proto);
+				### _log('parsed proto', $field, $format, $outformat, $proto);
 				
 				// attach parts to submission -- look at PhoneNumber.php
 				// self::$util->format($proto, \libphonenumber\PhoneNumberFormat::INTERNATIONAL)
 				// $parts = unserialize($proto->serialize());
-				
+
+				// area code per https://github.com/googlei18n/libphonenumber/issues/46 and https://github.com/giggsey/libphonenumber-for-php/blob/4ca0df036abdab8fa7bdf7c81eec07d5da30068e/src/libphonenumber/PhoneNumberUtil.php#L567
+				$acLen = self::$util->getLengthOfGeographicalAreaCode($proto);
+				$nationalNumber = self::$util->getNationalSignificantNumber($proto);
+
 				// attach each expected part, even if empty
-				$parts = array();
-				foreach(self::$parts as $k) {
-					$parts[$field . '-' . $k] = $proto->{'get' . $k}();
-				}
-				$parts[$field . '-Out'] = self::$util->format($proto, $outformat);
-				
+				// foreach(self::$parts as $k) $parts[$field . '-' . $k] = $proto->{'get' . $k}();
+				$parts = array(
+					$field . '-CountryCode' => $proto->getCountryCode(),
+					$field . '-NationalNumber' => $nationalNumber,
+					$field . '-AreaCode' => $acLen > 0 ? substr($nationalNumber, 0, $acLen) : '',
+					$field . '-Subscriber' => $acLen > 0 ? substr($nationalNumber, $acLen) : $nationalNumber,
+					$field . '-Extension' => $proto->getExtension(),
+					$field . '-NumberOfLeadingZeros' => $proto->getNumberOfLeadingZeros(),
+					$field . '-Out' => self::$util->format($proto, $outformat),
+				);
+
 				### _log($phonenumber, $format, $outformat, $parts);
 				
 				$submission += $parts;
@@ -129,7 +156,7 @@ class F3iPhonenumber {
 			### _log(__CLASS__, $phonenumber, $proto);
 		}
 		
-		### _log(__CLASS__, $submission);
+		### _log(__CLASS__ . '--after', $phoneFields, $submission);
 		return $submission;
 	}
 	

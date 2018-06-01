@@ -3,7 +3,7 @@ Contributors: zaus
 Donate link: http://drzaus.com/donate
 Tags: contact form, 3rdparty services, API, phone number, parsing, international number
 Requires at least: 3.0
-Tested up to: 4.3
+Tested up to: 4.5.3
 Stable tag: trunk
 License: GPLv2 or later
 
@@ -27,11 +27,36 @@ You may specify the input format (per country) with `=country-code`.
 You may specify both the input format and output format with `=input-format,output-format`.
 You may use another submission field to define the format by prefixing that field name with `##`, e.g. `field_name=##another_field`
 
+Will parse and split up input phone number(s) and create additional 'submission' fields (which you can map against):
+* `FIELDNAME-CountryCode` = country code
+* `FIELDNAME-NationalNumber` = regional number (without country code)
+* `FIELDNAME-AreaCode` = regional code
+* `FIELDNAME-Subscriber` = local number (without area code)
+* `FIELDNAME-Extension` = telephone extension, if present
+* `FIELDNAME-NumberOfLeadingZeros` = how many zeros it would start with if it had them
+* `FIELDNAME-Out` = reformated phone number
+
+Example: to convert input phone-number "9195551234" in various fields:
+	
+	field_name&field2=US,2&field3=2,3&field4=##field5
+	
+* `field_name` from assumed format into standard international `+1 919-555-1234`
+* `field2` assuming US country code into standard regional `(919) 555-1234`
+* `field3` from international format (requires country code `+X`) into url style `tel:+1-919-555-1234`
+* `field4` from international format (requires country code `+X`) into a format defined by `field5`
+
 == Frequently Asked Questions ==
 
 = It doesn't work right... =
 
 Drop an issue at https://github.com/zaus/f3i-phonenumber
+
+= Using field labels =
+
+Forms 3rdparty Integration makes some form plugin fields available by label as well as by id.  There is a [quirk in parsing url-querystrings](http://php.net/manual/en/function.parse-str.php#76978) whereby spaces in keys are turned into underscores.
+As of v0.4.2 this plugin will check if the key should have had spaces, so that 'your label=fieldvalue' will turn into:
+ * `your label-NationalNumber`
+ * `your label-_etc_`
 
 = Formats =
 
@@ -49,6 +74,13 @@ From [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/li
 N/A.
 
 == Changelog ==
+
+= 0.4.2 =
+* addressing [spaces in url key quirk](http://php.net/manual/en/function.parse-str.php#76978)
+
+= 0.4 =
+* updated libphonenumber from v7.2.2 to v7.4.5
+* including area code + subscriber number components
 
 = 0.3 =
 * use another submission field as the format
